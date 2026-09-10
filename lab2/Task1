@@ -1,0 +1,10 @@
+total_minutes_str = input("Введите количество минут: ")
+
+total_minutes = int(total_minutes_str)
+
+hours = total_minutes // 60
+
+minutes = total_minutes % 60
+
+print(f"Всего минут: {total_minutes}")
+print(f"Это составляет: {hours} час(а/ов) и {minutes} минут(ы).")
