@@ -1,0 +1,10 @@
+n = int(input("Введите пятизначное число: "))
+d1 = n // 10000          
+d2 = (n // 1000) % 10    
+d3 = (n // 100) % 10     
+d4 = (n // 10) % 10      
+d5 = n % 10              
+digit_sum = d1 + d2 + d3 + d4 + d5
+reversed_number = d5 * 10000 + d4 * 1000 + d3 * 100 + d2 * 10 + d1
+print(f"Сумма цифр: {digit_sum}")
+print(f"Число в обратном порядке: {reversed_number}")
