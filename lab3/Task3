@@ -1,1 +1,32 @@
+ef __init__(self, initial_password):
+    self.__password = initial_password 
 
+  def check_password(self, pwd):
+    """Проверка правильности введенного пароля"""
+    return self.__password == pwd
+
+  def change_password(self, old_pwd, new_pwd):
+    """Изменение пароля с проверкой старого"""
+    if self.check_password(old_pwd):
+      self.__password = new_pwd
+      print("Пароль успешно изменен!")
+      return True
+    else:
+      print("Ошибка: указан неверный старый пароль.")
+      return False
+
+
+
+pwd_manager = Password("Secret123")
+
+
+pwd_manager.change_password("WrongPass", "NewPass456")
+
+
+pwd_manager.change_password("Secret123", "NewSecurePass999")
+
+
+print(
+    "Результат проверки нового пароля:"
+    f" {pwd_manager.check_password('NewSecurePass999')}"
+)
