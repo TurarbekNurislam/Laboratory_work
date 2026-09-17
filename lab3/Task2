@@ -1,1 +1,35 @@
+class BankAccount:
 
+  def __init__(self, owner, initial_balance=0.0):
+    self.owner = owner  
+    self.__balance = initial_balance  
+
+  def deposit(self, amount):
+    """Пополнение счета"""
+    if amount > 0:
+      self.__balance += amount
+      print(
+          f"Счет владельца {self.owner} пополнен на {amount}. Текущий баланс:"
+          f" {self.__balance}"
+      )
+    else:
+      print("Ошибка: сумма пополнения должна быть больше нуля.")
+
+  def withdraw(self, amount):
+    """Снятие средств"""
+    if 0 < amount <= self.__balance:
+      self.__balance -= amount
+      print(f"Снято {amount}. Остаток на балансе: {self.__balance}")
+    else:
+      print("Ошибка: недостаточно средств или некорректная сумма для снятия.")
+
+  def get_balance(self):
+    """Метод для безопасного просмотра баланса"""
+    return self.__balance
+
+
+
+account = BankAccount("Жаркын", 5000)
+account.deposit(1500)
+account.withdraw(2000)
+print(f"Текущий баланс: {account.get_balance()}")
