@@ -1,0 +1,97 @@
+<form id="eventForm">
+  <label for="name">Имя:</label>
+  <input type="text" id="name" name="name" required>
+
+  <label for="email">E-mail:</label>
+  <input type="email" id="email" name="email" required>
+
+  <label for="ticket">Категория билета:</label>
+  <select id="ticket" name="ticket" required>
+    <option value="">Выберите категорию</option>
+    <option value="standard" data-price="1000">Стандарт — 1000 ₽</option>
+    <option value="vip" data-price="2500">VIP — 2500 ₽</option>
+    <option value="premium" data-price="4000">Premium — 4000 ₽</option>
+  </select>
+
+  <label for="quantity">Количество билетов:</label>
+  <input
+    type="number"
+    id="quantity"
+    name="quantity"
+    min="1"
+    max="10"
+    value="1"
+    required
+  >
+
+  <fieldset>
+    <legend>Дополнительные опции:</legend>
+
+    <label>
+      <input type="checkbox" name="options" value="food" data-price="500">
+      Питание (+500 ₽)
+    </label>
+
+    <label>
+      <input type="checkbox" name="options" value="parking" data-price="300">
+      Парковка (+300 ₽)
+    </label>
+
+    <label>
+      <input type="checkbox" name="options" value="merch" data-price="700">
+      Подарочный набор (+700 ₽)
+    </label>
+  </fieldset>
+
+  <button type="submit">Забронировать</button>
+
+  <p>
+    <strong>Итого: <span id="total">0</span> ₽</strong>
+  </p>
+</form>
+
+<script>
+  const form = document.getElementById("eventForm");
+  const ticket = document.getElementById("ticket");
+  const quantity = document.getElementById("quantity");
+  const total = document.getElementById("total");
+
+  function calculateTotal() {
+    const selectedTicket = ticket.options[ticket.selectedIndex];
+    const ticketPrice = Number(selectedTicket.dataset.price || 0);
+    const count = Number(quantity.value) || 0;
+
+    let optionsPrice = 0;
+
+    document
+      .querySelectorAll('input[name="options"]:checked')
+      .forEach(option => {
+        optionsPrice += Number(option.dataset.price);
+      });
+
+    const result = ticketPrice * count + optionsPrice;
+
+    total.textContent = result.toLocaleString("ru-RU");
+  }
+
+  form.addEventListener("submit", function (event) {
+    event.preventDefault();
+
+    if (!form.checkValidity()) {
+      form.reportValidity();
+      return;
+    }
+
+    calculateTotal();
+    alert(`Бронирование подтверждено. Итоговая стоимость: ${total.textContent} ₽`);
+  });
+
+  ticket.addEventListener("change", calculateTotal);
+  quantity.addEventListener("input", calculateTotal);
+
+  document
+    .querySelectorAll('input[name="options"]')
+    .forEach(option => {
+      option.addEventListener("change", calculateTotal);
+    });
+</script>
