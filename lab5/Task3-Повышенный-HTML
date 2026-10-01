@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Каталог товаров</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f2f2f2;
+            padding: 30px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: auto;
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+        .filter {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        input, button {
+            padding: 10px;
+            margin-top: 10px;
+        }
+
+        button {
+            background-color: #2196f3;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+
+        .products {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+        }
+
+        .card {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px #ccc;
+        }
+
+        .card h3 {
+            margin-top: 0;
+        }
+
+        .price {
+            color: green;
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        #message {
+            color: red;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>Каталог товаров</h1>
+
+    <div class="filter">
+        <label for="maxPrice">Максимальная цена:</label>
+
+        <br>
+
+        <input
+            type="number"
+            id="maxPrice"
+            placeholder="Например, 50000"
+        >
+
+        <button id="filterButton">Показать товары</button>
+        <button id="showAllButton">Показать все</button>
+    </div>
+
+    <p id="message"></p>
+
+    <div id="products" class="products"></div>
+
+</div>
+
+<script src="script.js"></script>
+
+</body>
+</html>
+
