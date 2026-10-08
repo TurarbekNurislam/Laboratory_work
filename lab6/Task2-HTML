@@ -1,1 +1,234 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Список товаров</title>
 
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f2f2f2;
+            padding: 40px;
+        }
+
+        .container {
+            max-width: 700px;
+            margin: auto;
+            background-color: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 0 10px gray;
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+        input {
+            padding: 12px;
+            margin: 5px;
+            border: 1px solid #ccc;
+            border-radius: 7px;
+        }
+
+        .add {
+            padding: 12px 20px;
+            background-color: #16a34a;
+            color: white;
+            border: none;
+            border-radius: 7px;
+            cursor: pointer;
+        }
+
+        .product {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 15px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+        }
+
+        .product-name {
+            font-weight: bold;
+        }
+
+        button {
+            padding: 8px 12px;
+            margin: 3px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            color: white;
+            background-color: #2563eb;
+        }
+
+        .delete {
+            background-color: #dc2626;
+        }
+
+        #total {
+            margin-top: 25px;
+            text-align: right;
+            font-size: 20px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>Список товаров</h1>
+
+    <input
+        type="text"
+        id="name"
+        placeholder="Название товара"
+    >
+
+    <input
+        type="number"
+        id="price"
+        placeholder="Цена"
+        min="1"
+    >
+
+    <button class="add" id="add">
+        Добавить
+    </button>
+
+    <div id="products"></div>
+
+    <div id="total">
+        Итого: 0 тг
+    </div>
+
+</div>
+
+<script>
+
+    let products = [];
+
+    const nameInput = document.querySelector("#name");
+    const priceInput = document.querySelector("#price");
+    const addButton = document.querySelector("#add");
+    const productsContainer = document.querySelector("#products");
+    const totalElement = document.querySelector("#total");
+
+
+    addButton.addEventListener("click", function () {
+
+        const name = nameInput.value.trim();
+        const price = Number(priceInput.value);
+
+        if (name === "") {
+            alert("Введите название товара");
+            return;
+        }
+
+        if (price <= 0) {
+            alert("Введите правильную цену");
+            return;
+        }
+
+        const product = {
+            name: name,
+            price: price,
+            quantity: 1
+        };
+
+        products.push(product);
+
+        nameInput.value = "";
+        priceInput.value = "";
+
+        showProducts();
+    });
+
+
+    function showProducts() {
+
+        productsContainer.innerHTML = "";
+
+        let total = 0;
+
+        products.forEach(function (product, index) {
+
+            total += product.price * product.quantity;
+
+            const div = document.createElement("div");
+
+            div.classList.add("product");
+
+            div.innerHTML = `
+                <div>
+                    <div class="product-name">
+                        ${product.name}
+                    </div>
+
+                    <div>
+                        Цена: ${product.price} тг
+                    </div>
+                </div>
+
+                <div>
+                    <button onclick="decrease(${index})">
+                        −
+                    </button>
+
+                    <b>${product.quantity}</b>
+
+                    <button onclick="increase(${index})">
+                        +
+                    </button>
+
+                    <button
+                        class="delete"
+                        onclick="removeProduct(${index})">
+                        Удалить
+                    </button>
+                </div>
+            `;
+
+            productsContainer.append(div);
+        });
+
+        totalElement.textContent =
+            "Итого: " + total + " тг";
+    }
+
+
+    function increase(index) {
+
+        products[index].quantity++;
+
+        showProducts();
+    }
+
+
+    function decrease(index) {
+
+        products[index].quantity--;
+
+        if (products[index].quantity <= 0) {
+            products.splice(index, 1);
+        }
+
+        showProducts();
+    }
+
+
+    function removeProduct(index) {
+
+        products.splice(index, 1);
+
+        showProducts();
+    }
+
+</script>
+
+</body>
+</html>
