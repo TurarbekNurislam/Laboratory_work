@@ -1,1 +1,236 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Тест JavaScript</title>
 
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f2f2f2;
+            padding: 50px;
+        }
+
+        .container {
+            max-width: 650px;
+            margin: auto;
+            background-color: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 0 10px gray;
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+        #question {
+            font-size: 22px;
+            font-weight: bold;
+            margin: 25px 0;
+        }
+
+        .answer {
+            display: block;
+            width: 100%;
+            padding: 14px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            background-color: #f8f8f8;
+            cursor: pointer;
+            text-align: left;
+            font-size: 16px;
+        }
+
+        .answer:hover {
+            background-color: #e5e7eb;
+        }
+
+        #progress {
+            color: gray;
+            text-align: center;
+        }
+
+        #result {
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+            color: #16a34a;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>Тест по JavaScript</h1>
+
+    <div id="quiz">
+
+        <div id="question"></div>
+
+        <div id="answers"></div>
+
+        <p id="progress"></p>
+
+    </div>
+
+    <div id="result"></div>
+
+</div>
+
+<script>
+
+    const questions = [
+
+        {
+            question: "Что такое DOM?",
+            answers: [
+                "Document Object Model",
+                "Digital Object Model",
+                "Data Object Method",
+                "Document Online Mode"
+            ],
+            correct: 0
+        },
+
+        {
+            question: "Как найти элемент по ID?",
+            answers: [
+                "queryId()",
+                "getElementById()",
+                "findId()",
+                "getId()"
+            ],
+            correct: 1
+        },
+
+        {
+            question: "Как создать новый элемент?",
+            answers: [
+                "createElement()",
+                "newElement()",
+                "addElement()",
+                "makeElement()"
+            ],
+            correct: 0
+        },
+
+        {
+            question: "Как обработать событие?",
+            answers: [
+                "event()",
+                "addEventListener()",
+                "createEvent()",
+                "eventHandler()"
+            ],
+            correct: 1
+        },
+
+        {
+            question: "Как удалить элемент DOM?",
+            answers: [
+                "delete()",
+                "remove()",
+                "deleteElement()",
+                "clear()"
+            ],
+            correct: 1
+        }
+
+    ];
+
+
+    let currentQuestion = 0;
+    let score = 0;
+
+
+    const questionElement =
+        document.querySelector("#question");
+
+    const answersElement =
+        document.querySelector("#answers");
+
+    const progressElement =
+        document.querySelector("#progress");
+
+    const resultElement =
+        document.querySelector("#result");
+
+
+    function showQuestion() {
+
+        const question = questions[currentQuestion];
+
+        questionElement.textContent =
+            question.question;
+
+        answersElement.innerHTML = "";
+
+        question.answers.forEach(function (answer, index) {
+
+            const button = document.createElement("button");
+
+            button.textContent = answer;
+
+            button.classList.add("answer");
+
+            button.addEventListener("click", function () {
+                checkAnswer(index);
+            });
+
+            answersElement.append(button);
+        });
+
+        progressElement.textContent =
+            "Вопрос " +
+            (currentQuestion + 1) +
+            " из " +
+            questions.length;
+    }
+
+
+    function checkAnswer(answerIndex) {
+
+        if (
+            answerIndex ===
+            questions[currentQuestion].correct
+        ) {
+            score++;
+        }
+
+        currentQuestion++;
+
+        if (currentQuestion < questions.length) {
+
+            showQuestion();
+
+        } else {
+
+            showResult();
+
+        }
+    }
+
+
+    function showResult() {
+
+        document.querySelector("#quiz").innerHTML = "";
+
+        resultElement.textContent =
+            "Тест завершён! Вы набрали " +
+            score +
+            " из " +
+            questions.length +
+            " баллов.";
+    }
+
+
+    showQuestion();
+
+</script>
+
+</body>
+</html>
