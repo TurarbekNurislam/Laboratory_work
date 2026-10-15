@@ -1,0 +1,364 @@
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Электронный журнал</title>
+<style>
+*{box-sizing:border-box}
+:root{--blue:#4f46e5;--bg:#f5f6fc;--text:#20243a;--muted:#858ba3;--border:#e8eaf2}
+body{margin:0;font-family:Arial,sans-serif;background:var(--bg);color:var(--text)}
+header{background:linear-gradient(120deg,#3730a3,#6366f1);color:white;padding:28px 20px}
+.header{max-width:1100px;margin:auto;display:flex;justify-content:space-between;align-items:center;gap:15px}
+header h1{margin:0 0 8px;font-size:27px}
+header p{margin:0;color:#e0e7ff}
+.logo{font-size:42px}
+.container{max-width:1100px;margin:25px auto;padding:0 20px}
+.tabs{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:22px}
+.tab{border:0;background:white;color:#555d75;padding:14px 22px;border-radius:10px;cursor:pointer;font-weight:bold;box-shadow:0 2px 8px #1e293b08}
+.tab.active,.tab:hover{background:var(--blue);color:white}
+.cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-bottom:22px}
+.card,.panel{background:white;border:1px solid var(--border);border-radius:15px;padding:22px;box-shadow:0 5px 20px #252d4a08}
+.card .label{color:var(--muted);font-size:14px}
+.card .number{font-size:32px;font-weight:bold;color:var(--blue);margin-top:12px}
+.panel{margin-bottom:20px}
+h2{font-size:21px;margin:0 0 20px}
+.form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px}
+.field{display:flex;flex-direction:column;gap:7px}
+label{font-size:14px;font-weight:bold}
+input,select{width:100%;padding:12px;border:1px solid #dfe2ed;border-radius:8px;font:inherit;background:white}
+input:focus,select:focus{outline:2px solid #c7d2fe;border-color:var(--blue)}
+button{font:inherit}
+.btn{background:var(--blue);color:white;border:0;border-radius:8px;padding:12px 17px;cursor:pointer;font-weight:bold}
+.btn:hover{background:#3730a3}
+.form .btn{align-self:end;justify-self:start}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;white-space:nowrap}
+th,td{text-align:left;padding:14px 12px;border-bottom:1px solid var(--border)}
+th{background:#f8f9fd;color:var(--muted);font-size:13px}
+td{font-size:14px}
+.pill{display:inline-block;background:#eef2ff;color:#4338ca;padding:5px 10px;border-radius:7px;font-weight:bold}
+.delete{background:#fee2e2;color:#b91c1c;border:0;border-radius:6px;padding:7px 10px;cursor:pointer}
+.empty{text-align:center;color:var(--muted);padding:25px}
+.message{margin-top:12px;font-size:14px}
+.error{color:#b91c1c}.success{color:#047857}
+.hint{font-size:13px;color:var(--muted);line-height:1.6}
+footer{text-align:center;padding:25px;color:var(--muted);font-size:13px}
+@media(max-width:650px){.cards{grid-template-columns:1fr}.form{grid-template-columns:1fr}.header h1{font-size:22px}.logo{font-size:32px}.card,.panel{padding:17px}.tab{flex:1;padding:12px 10px}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header">
+    <div>
+      <h1>📘 Электронный журнал</h1>
+      <p>Система учёта студентов и успеваемости</p>
+    </div>
+    <div class="logo">🎓</div>
+  </div>
+</header>
+
+<div class="container">
+  <nav class="tabs" aria-label="Разделы журнала">
+    <button class="tab active" data-page="students">👥 Студенты</button>
+    <button class="tab" data-page="grades">📝 Оценки</button>
+    <button class="tab" data-page="stats">📊 Статистика</button>
+  </nav>
+  <main id="content" aria-live="polite"></main>
+</div>
+
+<footer>Лабораторная работа № 3 · HTML5 · CSS3 · JavaScript</footer>
+
+<script>
+"use strict";
+
+const KEY = "spaElectronicJournal";
+const initial = {
+  students: [
+    {id:1,name:"Иванов Иван",group:"ИТ-101"},
+    {id:2,name:"Петрова Анна",group:"ИТ-101"},
+    {id:3,name:"Сидоров Максим",group:"ИТ-102"}
+  ],
+  grades: [
+    {id:1,studentId:1,subject:"JavaScript",value:5},
+    {id:2,studentId:1,subject:"HTML и CSS",value:4},
+    {id:3,studentId:2,subject:"JavaScript",value:5},
+    {id:4,studentId:2,subject:"HTML и CSS",value:5},
+    {id:5,studentId:3,subject:"JavaScript",value:3}
+  ],
+  studentId:4,gradeId:6
+};
+
+function load(){
+  try{
+    const raw=localStorage.getItem(KEY);
+    if(!raw) return structuredClone(initial);
+    const d=JSON.parse(raw);
+    if(!d || !Array.isArray(d.students) || !Array.isArray(d.grades))
+      throw new Error("Некорректный формат данных");
+    d.studentId=Math.max(Number(d.studentId)||1,...d.students.map(x=>Number(x.id)+1),1);
+    d.gradeId=Math.max(Number(d.gradeId)||1,...d.grades.map(x=>Number(x.id)+1),1);
+    return d;
+  }catch(e){
+    console.error("Не удалось загрузить данные:",e);
+    return {students:[],grades:[],studentId:1,gradeId:1};
+  }
+}
+
+let db=load();
+let page="students";
+const content=document.querySelector("#content");
+
+function el(tag,text,cls){
+  const node=document.createElement(tag);
+  if(text!==undefined) node.textContent=String(text);
+  if(cls) node.className=cls;
+  return node;
+}
+function cell(row,value){
+  const td=el("td",value);
+  row.appendChild(td);
+  return td;
+}
+function save(){
+  try{
+    localStorage.setItem(KEY,JSON.stringify(db));
+    return true;
+  }catch(e){
+    console.error("Ошибка сохранения:",e);
+    return false;
+  }
+}
+function student(id){
+  return db.students.find(s=>s.id===Number(id));
+}
+function gradesFor(id){
+  return db.grades.filter(g=>g.studentId===Number(id));
+}
+function avg(list){
+  return list.length?list.reduce((sum,g)=>sum+g.value,0)/list.length:0;
+}
+function fmt(n){
+  return n.toLocaleString("ru-RU",{minimumFractionDigits:2,maximumFractionDigits:2});
+}
+function panel(title){
+  const p=el("section",undefined,"panel");
+  p.appendChild(el("h2",title));
+  return p;
+}
+function message(parent,text,error=false){
+  let m=parent.querySelector(".message");
+  if(!m){m=el("p",undefined,"message");m.setAttribute("role","status");parent.appendChild(m);}
+  m.className="message "+(error?"error":"success");
+  m.textContent=text;
+}
+function field(labelText,name,placeholder,type="text"){
+  const wrap=el("div",undefined,"field");
+  const label=el("label",labelText);
+  label.htmlFor=name;
+  const input=el("input");
+  input.id=name;input.name=name;input.type=type;
+  input.placeholder=placeholder;input.required=true;
+  input.autocomplete="off";
+  wrap.append(label,input);
+  return wrap;
+}
+function table(headers,rows){
+  const wrap=el("div",undefined,"table-wrap");
+  const t=document.createElement("table");
+  const thead=document.createElement("thead");
+  const hr=document.createElement("tr");
+  headers.forEach(h=>hr.appendChild(el("th",h)));
+  thead.appendChild(hr);t.appendChild(thead);
+  const body=document.createElement("tbody");
+  rows.forEach(row=>body.appendChild(row));
+  t.appendChild(body);wrap.appendChild(t);
+  return wrap;
+}
+function stat(label,value){
+  const c=el("div",undefined,"card");
+  c.appendChild(el("div",label,"label"));
+  c.appendChild(el("div",value,"number"));
+  return c;
+}
+
+function navigate(next){
+  page=next;
+  document.querySelectorAll(".tab").forEach(btn=>{
+    const active=btn.dataset.page===page;
+    btn.classList.toggle("active",active);
+    btn.setAttribute("aria-current",active?"page":"false");
+  });
+  render();
+}
+document.querySelectorAll(".tab").forEach(btn=>{
+  btn.addEventListener("click",()=>navigate(btn.dataset.page));
+});
+
+function render(){
+  content.replaceChildren();
+  try{
+    if(page==="students") renderStudents();
+    else if(page==="grades") renderGrades();
+    else renderStats();
+  }catch(e){
+    console.error("Ошибка отображения:",e);
+    content.appendChild(el("p","Не удалось отобразить страницу. Попробуйте переключить вкладку.","message error"));
+  }
+}
+
+function renderStudents(){
+  const p=panel("➕ Добавление студента");
+  const form=el("form",undefined,"form");
+  form.append(field("ФИО студента","studentName","Например, Алия Садыкова"));
+  form.append(field("Учебная группа","studentGroup","Например, ИТ-101"));
+  const submit=el("button","Добавить студента","btn");
+  submit.type="submit";form.append(submit);
+  form.addEventListener("submit",e=>{
+    e.preventDefault();
+    const name=form.elements.studentName.value.trim();
+    const group=form.elements.studentGroup.value.trim();
+    if(!name||!group){message(p,"Заполните все поля.",true);return;}
+    if(db.students.some(s=>s.name.toLowerCase()===name.toLowerCase()&&s.group.toLowerCase()===group.toLowerCase())){
+      message(p,"Такой студент уже есть в этой группе.",true);return;
+    }
+    db.students.push({id:db.studentId++,name,group});
+    const ok=save();render();
+    if(!ok) message(content.querySelector(".panel"),"Запись добавлена, но браузер не смог сохранить данные.",true);
+  });
+  p.appendChild(form);
+  content.appendChild(p);
+
+  const list=panel("👥 Список студентов");
+  if(!db.students.length){
+    list.appendChild(el("p","Студентов пока нет.","empty"));
+  }else{
+    const rows=db.students.map((s,i)=>{
+      const r=document.createElement("tr");
+      cell(r,i+1);cell(r,s.name);cell(r,s.group);
+      const gs=gradesFor(s.id);
+      cell(r,gs.length);
+      cell(r,gs.length?fmt(avg(gs)):"—");
+      const td=el("td");
+      const b=el("button","Удалить","delete");
+      b.type="button";b.addEventListener("click",()=>{
+        if(!confirm("Удалить студента и все его оценки?"))return;
+        db.students=db.students.filter(x=>x.id!==s.id);
+        db.grades=db.grades.filter(g=>g.studentId!==s.id);
+        save();render();
+      });
+      td.appendChild(b);r.appendChild(td);
+      return r;
+    });
+    list.appendChild(table(["№","ФИО","Группа","Оценок","Средний балл","Действие"],rows));
+  }
+  content.appendChild(list);
+}
+
+function renderGrades(){
+  const p=panel("📝 Добавление оценки");
+  if(!db.students.length){
+    p.appendChild(el("p","Сначала добавьте студента во вкладке «Студенты».","empty"));
+    content.appendChild(p);renderGradeList();return;
+  }
+  const form=el("form",undefined,"form");
+  const sf=el("div",undefined,"field");
+  const sl=el("label","Студент");sl.htmlFor="gradeStudent";
+  const select=el("select");select.id="gradeStudent";select.name="studentId";
+  select.required=true;
+  db.students.forEach(s=>{
+    const o=el("option",s.name+" ("+s.group+")");
+    o.value=s.id;select.appendChild(o);
+  });
+  sf.append(sl,select);
+  form.appendChild(sf);
+  form.appendChild(field("Дисциплина","subject","Например, JavaScript"));
+  const gf=el("div",undefined,"field");
+  const gl=el("label","Оценка");gl.htmlFor="gradeValue";
+  const gs=el("select");gs.id="gradeValue";gs.name="value";
+  [5,4,3,2].forEach(v=>{const o=el("option",v);o.value=v;gs.appendChild(o);});
+  gf.append(gl,gs);form.appendChild(gf);
+  const submit=el("button","Сохранить оценку","btn");
+  submit.type="submit";form.appendChild(submit);
+
+  form.addEventListener("submit",e=>{
+    e.preventDefault();
+    const studentId=Number(select.value);
+    const subject=form.elements.subject.value.trim();
+    const value=Number(gs.value);
+    if(!student(studentId)||!subject){message(p,"Выберите студента и укажите дисциплину.",true);return;}
+    if(!Number.isInteger(value)||value<2||value>5){message(p,"Оценка должна быть от 2 до 5.",true);return;}
+    db.grades.push({id:db.gradeId++,studentId,subject,value});
+    const ok=save();render();
+    if(!ok)message(content.querySelector(".panel"),"Оценка добавлена, но сохранение не удалось.",true);
+  });
+  p.appendChild(form);content.appendChild(p);
+  renderGradeList();
+}
+
+function renderGradeList(){
+  const p=panel("📋 Журнал оценок");
+  if(!db.grades.length){
+    p.appendChild(el("p","Оценок пока нет.","empty"));
+  }else{
+    const rows=db.grades.map((g,i)=>{
+      const r=document.createElement("tr");
+      const s=student(g.studentId);
+      cell(r,i+1);cell(r,s?s.name:"Неизвестный студент");
+      cell(r,s?s.group:"—");cell(r,g.subject);
+      const td=cell(r,"");td.appendChild(el("span",g.value,"pill"));
+      const action=el("td");
+      const b=el("button","Удалить","delete");
+      b.type="button";b.addEventListener("click",()=>{
+        db.grades=db.grades.filter(x=>x.id!==g.id);
+        save();render();
+      });
+      action.appendChild(b);r.appendChild(action);
+      return r;
+    });
+    p.appendChild(table(["№","Студент","Группа","Дисциплина","Оценка","Действие"],rows));
+  }
+  content.appendChild(p);
+}
+
+function renderStats(){
+  const total=db.grades.length;
+  const cards=el("section",undefined,"cards");
+  cards.appendChild(stat("Всего студентов",db.students.length));
+  cards.appendChild(stat("Всего оценок",total));
+  cards.appendChild(stat("Средний балл",total?fmt(avg(db.grades)):"—"));
+  content.appendChild(cards);
+
+  const p=panel("📊 Успеваемость студентов");
+  if(!db.students.length){
+    p.appendChild(el("p","Нет данных для статистики.","empty"));
+  }else{
+    const rows=db.students.map(s=>{
+      const list=gradesFor(s.id);
+      const a=avg(list);
+      let result="Нет оценок";
+      if(list.length){
+        if(a>=4.5)result="Отлично";
+        else if(a>=3.5)result="Хорошо";
+        else if(a>=3)result="Удовлетворительно";
+        else result="Низкая успеваемость";
+      }
+      const r=document.createElement("tr");
+      cell(r,s.name);cell(r,s.group);cell(r,list.length);
+      cell(r,list.length?fmt(a):"—");
+      cell(r,result);
+      return r;
+    });
+    p.appendChild(table(["Студент","Группа","Количество оценок","Средний балл","Результат"],rows));
+  }
+  p.appendChild(el("p","Средний балл = сумма оценок / количество оценок. Статистика пересчитывается автоматически.","hint"));
+  content.appendChild(p);
+}
+
+navigate("students");
+</script>
+</body>
+</html>
+
