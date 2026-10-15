@@ -1,0 +1,459 @@
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SPA — Список задач</title>
+
+<style>
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 30px 16px;
+  min-height: 100vh;
+  font-family: Arial, sans-serif;
+  background: #f1f4fa;
+  color: #20263a;
+}
+
+.app {
+  max-width: 760px;
+  margin: 0 auto;
+}
+
+header {
+  margin-bottom: 25px;
+}
+
+header p {
+  color: #64708a;
+}
+
+h1 {
+  margin-bottom: 8px;
+  color: #28345d;
+}
+
+.panel {
+  padding: 25px;
+  background: white;
+  border-radius: 18px;
+  box-shadow: 0 8px 30px #26395b12;
+}
+
+label {
+  display: block;
+  margin-bottom: 10px;
+  font-weight: bold;
+}
+
+.form-row {
+  display: flex;
+  gap: 10px;
+}
+
+input[type="text"] {
+  flex: 1;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid #d5dbea;
+  border-radius: 9px;
+  font-size: 15px;
+}
+
+button {
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.add-button {
+  padding: 12px 18px;
+  border: none;
+  border-radius: 9px;
+  background: #5265c8;
+  color: white;
+  font-weight: bold;
+}
+
+.tabs {
+  display: flex;
+  gap: 8px;
+  margin: 22px 0;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #e6e9f0;
+}
+
+.tab {
+  flex: 1;
+  padding: 11px 8px;
+  border: none;
+  border-radius: 9px;
+  background: #f0f2f8;
+  color: #555e75;
+}
+
+.tab.active {
+  background: #5265c8;
+  color: white;
+}
+
+#message {
+  min-height: 18px;
+  color: #b42318;
+  font-size: 13px;
+}
+
+#summary {
+  margin-bottom: 15px;
+  color: #6d7589;
+  font-size: 14px;
+}
+
+.task-list {
+  display: grid;
+  gap: 10px;
+}
+
+.task {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid #e3e7f0;
+  border-radius: 11px;
+}
+
+.task input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: #5265c8;
+}
+
+.task-title {
+  flex: 1;
+  overflow-wrap: anywhere;
+}
+
+.task.done .task-title {
+  color: #9299a9;
+  text-decoration: line-through;
+}
+
+.delete-button {
+  padding: 8px 10px;
+  border: none;
+  border-radius: 7px;
+  background: #fff0f0;
+  color: #b42318;
+}
+
+.empty {
+  padding: 25px 10px;
+  text-align: center;
+  color: #7c8497;
+}
+
+footer {
+  margin-top: 22px;
+  text-align: center;
+  color: #8991a3;
+  font-size: 12px;
+}
+
+button:focus-visible,
+input:focus-visible {
+  outline: 3px solid #aab5ff;
+  outline-offset: 2px;
+}
+
+@media (max-width: 480px) {
+  .panel {
+    padding: 17px;
+  }
+
+  .form-row {
+    flex-direction: column;
+  }
+
+  .add-button {
+    min-height: 44px;
+  }
+
+  .tabs {
+    gap: 5px;
+  }
+
+  .tab {
+    padding: 10px 3px;
+    font-size: 12px;
+  }
+}
+</style>
+</head>
+
+<body>
+<div class="app">
+
+  <header>
+    <p>ЛАБОРАТОРНАЯ РАБОТА · HTML5 · CSS3 · JS</p>
+    <h1>Мои задачи</h1>
+    <p>Простое SPA-приложение для управления задачами.</p>
+  </header>
+
+  <section class="panel">
+
+    <form id="task-form">
+      <label for="task-input">Добавить новую задачу</label>
+
+      <div class="form-row">
+        <input
+          type="text"
+          id="task-input"
+          placeholder="Например, изучить JavaScript"
+          maxlength="200"
+          required
+        >
+        <button class="add-button" type="submit">
+          + Добавить
+        </button>
+      </div>
+
+      <p id="message" role="status" aria-live="polite"></p>
+    </form>
+
+    <nav class="tabs" aria-label="Фильтр задач">
+      <button class="tab active" data-page="all"
+              aria-pressed="true">Все</button>
+      <button class="tab" data-page="active"
+              aria-pressed="false">Активные</button>
+      <button class="tab" data-page="completed"
+              aria-pressed="false">Выполненные</button>
+    </nav>
+
+    <div id="summary"></div>
+    <main id="content" aria-live="polite"></main>
+
+  </section>
+
+  <footer>
+    Одностраничное приложение без фреймворков
+  </footer>
+
+</div>
+
+<script>
+"use strict";
+
+const STORAGE_KEY = "spa-tasks-v1";
+
+const form = document.getElementById("task-form");
+const input = document.getElementById("task-input");
+const message = document.getElementById("message");
+const content = document.getElementById("content");
+const summary = document.getElementById("summary");
+const tabs = document.querySelectorAll("[data-page]");
+
+let currentPage = "all";
+let tasks = [];
+
+// Загрузка задач из localStorage
+function loadTasks() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+
+    if (saved === null) return [];
+
+    const data = JSON.parse(saved);
+
+    if (
+      !Array.isArray(data) ||
+      !data.every(task =>
+        task !== null &&
+        typeof task === "object" &&
+        typeof task.id === "string" &&
+        typeof task.title === "string" &&
+        typeof task.completed === "boolean"
+      )
+    ) {
+      throw new Error("Некорректный формат данных");
+    }
+
+    return data;
+  } catch (error) {
+    message.textContent =
+      "Не удалось загрузить данные. Создан новый список.";
+    return [];
+  }
+}
+
+// Сохранение задач
+function saveTasks() {
+  try {
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify(tasks)
+    );
+    return true;
+  } catch (error) {
+    message.textContent =
+      "Ошибка сохранения данных в браузере.";
+    return false;
+  }
+}
+
+// Создание карточки задачи
+function createTaskElement(task) {
+  const item = document.createElement("div");
+  item.className = "task";
+
+  if (task.completed) {
+    item.classList.add("done");
+  }
+
+  const checkbox = document.createElement("input");
+  checkbox.type = "checkbox";
+  checkbox.checked = task.completed;
+  checkbox.setAttribute(
+    "aria-label",
+    "Выполнена: " + task.title
+  );
+
+  checkbox.addEventListener("change", () => {
+    task.completed = checkbox.checked;
+    saveTasks();
+    render();
+  });
+
+  const title = document.createElement("span");
+  title.className = "task-title";
+  title.textContent = task.title;
+
+  const deleteButton = document.createElement("button");
+  deleteButton.className = "delete-button";
+  deleteButton.type = "button";
+  deleteButton.textContent = "Удалить";
+
+  deleteButton.addEventListener("click", () => {
+    tasks = tasks.filter(t => t.id !== task.id);
+    saveTasks();
+    render();
+  });
+
+  item.append(checkbox, title, deleteButton);
+
+  return item;
+}
+
+// Фильтрация задач
+function getVisibleTasks() {
+  if (currentPage === "active") {
+    return tasks.filter(task => !task.completed);
+  }
+
+  if (currentPage === "completed") {
+    return tasks.filter(task => task.completed);
+  }
+
+  return tasks;
+}
+
+// Отрисовка содержимого страницы
+function render() {
+  content.replaceChildren();
+
+  const visibleTasks = getVisibleTasks();
+  const completedCount =
+    tasks.filter(task => task.completed).length;
+
+  summary.textContent =
+    `Всего: ${tasks.length} | ` +
+    `Активных: ${tasks.length - completedCount} | ` +
+    `Выполнено: ${completedCount}`;
+
+  tabs.forEach(tab => {
+    const active = tab.dataset.page === currentPage;
+    tab.classList.toggle("active", active);
+    tab.setAttribute("aria-pressed", String(active));
+  });
+
+  if (visibleTasks.length === 0) {
+    const empty = document.createElement("p");
+    empty.className = "empty";
+
+    if (currentPage === "active") {
+      empty.textContent = "Активных задач нет.";
+    } else if (currentPage === "completed") {
+      empty.textContent = "Выполненных задач нет.";
+    } else {
+      empty.textContent =
+        "Список пуст. Добавьте свою первую задачу!";
+    }
+
+    content.append(empty);
+    return;
+  }
+
+  const list = document.createElement("div");
+  list.className = "task-list";
+
+  visibleTasks.forEach(task => {
+    list.append(createTaskElement(task));
+  });
+
+  content.append(list);
+}
+
+// Переключение вкладок
+tabs.forEach(tab => {
+  tab.addEventListener("click", () => {
+    currentPage = tab.dataset.page;
+    message.textContent = "";
+    render();
+  });
+});
+
+// Добавление задачи
+form.addEventListener("submit", event => {
+  event.preventDefault();
+
+  const title = input.value.trim();
+
+  if (!title) {
+    message.textContent = "Введите название задачи.";
+    input.focus();
+    return;
+  }
+
+  const id = window.crypto &&
+    typeof window.crypto.randomUUID === "function"
+    ? window.crypto.randomUUID()
+    : Date.now().toString() +
+      Math.random().toString(16).slice(2);
+
+  tasks.push({
+    id: id,
+    title: title,
+    completed: false
+  });
+
+  saveTasks();
+
+  input.value = "";
+  message.textContent = "";
+  currentPage = "all";
+
+  render();
+  input.focus();
+});
+
+// Запуск приложения
+tasks = loadTasks();
+render();
+</script>
+</body>
+</html>
+
