@@ -1,0 +1,456 @@
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Лабораторная работа №8 — Канбан-доска</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 30px 20px;
+            font-family: Arial, sans-serif;
+            background: #f1f5f9;
+            color: #1e293b;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: #1d4ed8;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #64748b;
+            margin-bottom: 30px;
+        }
+
+        .form {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 25px;
+        }
+
+        input, select, button {
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #cbd5e1;
+            font-size: 14px;
+        }
+
+        input {
+            flex: 1;
+            min-width: 0;
+        }
+
+        button {
+            cursor: pointer;
+            background: #2563eb;
+            color: white;
+            border: none;
+        }
+
+        button:hover {
+            opacity: 0.85;
+        }
+
+        .clear-btn {
+            background: #dc2626;
+        }
+
+        .board {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 18px;
+        }
+
+        .column {
+            background: #e2e8f0;
+            padding: 15px;
+            border-radius: 12px;
+            min-height: 350px;
+            transition: background 0.2s;
+        }
+
+        .column.drag-over {
+            background: #bfdbfe;
+        }
+
+        .column h2 {
+            font-size: 18px;
+            margin-top: 0;
+            padding-bottom: 12px;
+            border-bottom: 2px solid #cbd5e1;
+        }
+
+        .count {
+            color: #64748b;
+            font-size: 14px;
+        }
+
+        .task {
+            background: white;
+            padding: 14px;
+            margin-bottom: 12px;
+            border-radius: 9px;
+            box-shadow: 0 2px 5px #0000000d;
+            cursor: grab;
+            overflow-wrap: anywhere;
+        }
+
+        .task:active {
+            cursor: grabbing;
+        }
+
+        .task p {
+            margin: 0 0 12px;
+            white-space: pre-wrap;
+        }
+
+        .task select {
+            width: 100%;
+            margin-bottom: 8px;
+            background: #f8fafc;
+        }
+
+        .delete-btn {
+            width: 100%;
+            padding: 8px;
+            background: #ef4444;
+        }
+
+        .empty {
+            color: #94a3b8;
+            text-align: center;
+            padding: 30px 5px;
+            font-size: 14px;
+        }
+
+        .footer {
+            margin-top: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            color: #64748b;
+            font-size: 13px;
+        }
+
+        #message {
+            color: #15803d;
+        }
+
+        @media (max-width: 750px) {
+            .board {
+                grid-template-columns: 1fr;
+            }
+
+            .form {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+
+<body>
+<div class="container">
+
+    <h1>📋 Канбан-доска</h1>
+    <p class="subtitle">
+        Лабораторная работа №8 — JSON и LocalStorage
+    </p>
+
+    <div class="form">
+        <input
+            id="taskInput"
+            type="text"
+            placeholder="Введите название задачи..."
+            maxlength="200"
+        >
+        <button id="addBtn">+ Добавить задачу</button>
+    </div>
+
+    <div class="board">
+
+        <section class="column" data-status="plan">
+            <h2>📝 План <span class="count" id="count-plan">(0)</span></h2>
+            <div class="tasks" id="plan"></div>
+        </section>
+
+        <section class="column" data-status="progress">
+            <h2>⚙️ В работе <span class="count" id="count-progress">(0)</span></h2>
+            <div class="tasks" id="progress"></div>
+        </section>
+
+        <section class="column" data-status="done">
+            <h2>✅ Готово <span class="count" id="count-done">(0)</span></h2>
+            <div class="tasks" id="done"></div>
+        </section>
+
+    </div>
+
+    <div class="footer">
+        <span id="message">Данные готовы к работе</span>
+        <button class="clear-btn" id="clearBtn">
+            Удалить все задачи
+        </button>
+    </div>
+
+</div>
+
+<script>
+    // 1. Ключ для хранения данных
+    const STORAGE_KEY = "lab8_kanban_tasks";
+
+    const statuses = {
+        plan: "План",
+        progress: "В работе",
+        done: "Готово"
+    };
+
+    const input = document.getElementById("taskInput");
+    const addBtn = document.getElementById("addBtn");
+    const clearBtn = document.getElementById("clearBtn");
+    const message = document.getElementById("message");
+
+    let tasks = [];
+    let draggedTaskId = null;
+
+    // 2. Загрузка и проверка JSON из localStorage
+    function loadTasks() {
+        try {
+            const saved = localStorage.getItem(STORAGE_KEY);
+
+            if (saved === null) {
+                return [];
+            }
+
+            const parsed = JSON.parse(saved);
+
+            if (!Array.isArray(parsed)) {
+                return [];
+            }
+
+            // Проверяем структуру каждой карточки
+            return parsed.filter(task =>
+                task &&
+                typeof task.id === "string" &&
+                typeof task.text === "string" &&
+                Object.hasOwn(statuses, task.status)
+            );
+
+        } catch (error) {
+            console.error("Ошибка загрузки JSON:", error);
+            message.textContent =
+                "Не удалось прочитать сохранённые данные";
+            return [];
+        }
+    }
+
+    // 3. Сохранение массива задач в JSON
+    function saveTasks() {
+        try {
+            localStorage.setItem(
+                STORAGE_KEY,
+                JSON.stringify(tasks)
+            );
+
+            message.textContent = "✓ Изменения сохранены";
+            renderTasks();
+
+        } catch (error) {
+            console.error("Ошибка сохранения:", error);
+            message.textContent =
+                "Ошибка сохранения. Проверьте настройки браузера";
+        }
+    }
+
+    // 4. Создание карточки
+    function createTask(text) {
+        return {
+            id: Date.now().toString() +
+                "-" + Math.random().toString(36).slice(2, 8),
+            text: text,
+            status: "plan"
+        };
+    }
+
+    // 5. Отображение задач на доске
+    function renderTasks() {
+        const columns = {
+            plan: document.getElementById("plan"),
+            progress: document.getElementById("progress"),
+            done: document.getElementById("done")
+        };
+
+        Object.values(columns).forEach(column => {
+            column.replaceChildren();
+        });
+
+        const counts = {
+            plan: 0,
+            progress: 0,
+            done: 0
+        };
+
+        tasks.forEach(task => {
+            counts[task.status]++;
+
+            const card = document.createElement("article");
+            card.className = "task";
+            card.draggable = true;
+
+            // Перетаскивание карточки мышью
+            card.addEventListener("dragstart", () => {
+                draggedTaskId = task.id;
+            });
+
+            card.addEventListener("dragend", () => {
+                draggedTaskId = null;
+
+                document.querySelectorAll(".column")
+                    .forEach(column =>
+                        column.classList.remove("drag-over")
+                    );
+            });
+
+            const text = document.createElement("p");
+            text.textContent = task.text;
+            card.appendChild(text);
+
+            // Выбор статуса
+            const select = document.createElement("select");
+
+            Object.entries(statuses).forEach(([value, label]) => {
+                const option = document.createElement("option");
+                option.value = value;
+                option.textContent = label;
+                select.appendChild(option);
+            });
+
+            select.value = task.status;
+
+            select.addEventListener("change", () => {
+                task.status = select.value;
+                saveTasks();
+            });
+
+            card.appendChild(select);
+
+            // Удаление отдельной карточки
+            const deleteBtn = document.createElement("button");
+            deleteBtn.className = "delete-btn";
+            deleteBtn.textContent = "Удалить";
+
+            deleteBtn.addEventListener("click", () => {
+                tasks = tasks.filter(item => item.id !== task.id);
+                saveTasks();
+            });
+
+            card.appendChild(deleteBtn);
+            columns[task.status].appendChild(card);
+        });
+
+        // Пустые колонки и счётчики
+        Object.entries(columns).forEach(([status, column]) => {
+            document.getElementById("count-" + status).textContent =
+                "(" + counts[status] + ")";
+
+            if (counts[status] === 0) {
+                const empty = document.createElement("div");
+                empty.className = "empty";
+                empty.textContent = "Нет задач";
+                column.appendChild(empty);
+            }
+        });
+    }
+
+    // 6. Добавление новой задачи
+    function addTask() {
+        const text = input.value.trim();
+
+        if (!text) {
+            message.textContent = "Введите название задачи";
+            input.focus();
+            return;
+        }
+
+        tasks.push(createTask(text));
+        input.value = "";
+
+        saveTasks();
+        input.focus();
+    }
+
+    addBtn.addEventListener("click", addTask);
+
+    input.addEventListener("keydown", event => {
+        if (event.key === "Enter") {
+            addTask();
+        }
+    });
+
+    // 7. Перемещение задач перетаскиванием
+    document.querySelectorAll(".column").forEach(column => {
+        column.addEventListener("dragover", event => {
+            event.preventDefault();
+            column.classList.add("drag-over");
+        });
+
+        column.addEventListener("dragleave", event => {
+            if (!column.contains(event.relatedTarget)) {
+                column.classList.remove("drag-over");
+            }
+        });
+
+        column.addEventListener("drop", event => {
+            event.preventDefault();
+            column.classList.remove("drag-over");
+
+            if (!draggedTaskId) return;
+
+            const task = tasks.find(
+                item => item.id === draggedTaskId
+            );
+
+            if (!task) return;
+
+            task.status = column.dataset.status;
+            draggedTaskId = null;
+
+            saveTasks();
+        });
+    });
+
+    // 8. Удаление всех задач
+    clearBtn.addEventListener("click", () => {
+        if (tasks.length === 0) {
+            message.textContent = "Доска уже пустая";
+            return;
+        }
+
+        if (confirm("Вы действительно хотите удалить все задачи?")) {
+            tasks = [];
+            saveTasks();
+        }
+    });
+
+    // 9. Первоначальная загрузка и отрисовка
+    tasks = loadTasks();
+    renderTasks();
+</script>
+
+</body>
+</html>
+
