@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Калькулятор рейтинга</title>
+</head>
+<body style="font-family: Arial; max-width: 700px; margin: 20px auto; padding: 0 10px">
+<h2>Калькулятор академического рейтинга</h2>
+
+<input id="name" placeholder="Название">
+<input id="credits" placeholder="Кредиты" size="8">
+<input id="rk1" placeholder="РК1" size="6">
+<input id="rk2" placeholder="РК2" size="6">
+<input id="exam" placeholder="Экзамен" size="8">
+<button onclick="add()">Добавить</button>
+<p id="error" style="color:red"></p>
+
+<pre id="result"></pre>
+
+<script>
+var courses = [];
+
+// Буква и GPA по баллу
+function grade(score) {
+  var s = Math.round(score);
+  if (s >= 95) return ["A", 4.0];
+  if (s >= 90) return ["A-", 3.67];
+  if (s >= 85) return ["B+", 3.33];
+  if (s >= 80) return ["B", 3.0];
+  if (s >= 75) return ["B-", 2.67];
+  if (s >= 70) return ["C+", 2.33];
+  if (s >= 65) return ["C", 2.0];
+  if (s >= 60) return ["C-", 1.67];
+  if (s >= 55) return ["D+", 1.33];
+  if (s >= 50) return ["D", 1.0];
+  return ["F", 0];
+}
+
+// Проверка: число от 0 до 100
+function ok(x) {
+  return x !== "" && !isNaN(x) && x >= 0 && x <= 100;
+}
+
+function add() {
+  var v = function (id) { return document.getElementById(id).value.trim().replace(",", "."); };
+  var name = v("name"), credits = v("credits");
+  var rk1 = v("rk1"), rk2 = v("rk2"), exam = v("exam");
+
+  if (name === "") { error("Введите название"); return; }
+  if (!(credits >= 1 && credits <= 30 && credits == Math.round(credits))) { error("Кредиты: целое число от 1 до 30"); return; }
+  if (!ok(rk1) || !ok(rk2) || !ok(exam)) { error("РК1, РК2 и экзамен: числа от 0 до 100"); return; }
+
+  courses.push({ name: name, credits: Number(credits), rk1: Number(rk1), rk2: Number(rk2), exam: Number(exam) });
+  error("");
+  show();
+}
+
+function error(text) {
+  document.getElementById("error").textContent = text;
+}
+
+function show() {
+  var text = "";
+  var sum = 0, total = 0;
+
+  for (var i = 0; i < courses.length; i++) {
+    var c = courses[i];
+    var adm = (c.rk1 + c.rk2) / 2;           // рейтинг допуска
+    var final = adm * 0.6 + c.exam * 0.4;     // итоговый балл
+    var g = grade(final);
+    var note = "";
+
+    if (adm < 50) {                           // не допущен к экзамену
+      g = ["F", 0];
+      final = adm;
+      note = " (не допущен)";
+    }
+
+    var bar = "█".repeat(Math.round(final / 5));   // график: 1 квадрат = 5 баллов
+    text += c.name + ": " + final.toFixed(1) + " " + g[0] + note + "\n" + bar + "\n\n";
+
+    sum += g[1] * c.credits;
+    total += c.credits;
+  }
+
+  text += "GPA: " + (sum / total).toFixed(2) + " из 4.00";
+  document.getElementById("result").textContent = text;
+}
+</script>
+</body>
+</html>
