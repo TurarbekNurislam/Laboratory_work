@@ -1,0 +1,464 @@
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Лабораторная работа №8 — Учёт расходов</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 25px 15px;
+            min-height: 100vh;
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #dbeafe, #ede9fe);
+            color: #1f2937;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 30px;
+            background: white;
+            border-radius: 18px;
+            box-shadow: 0 10px 30px #00000015;
+        }
+
+        h1 {
+            text-align: center;
+            color: #4338ca;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #6b7280;
+            margin-bottom: 25px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 7px;
+            font-weight: bold;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 15px;
+        }
+
+        button {
+            padding: 12px 16px;
+            border: none;
+            border-radius: 8px;
+            background: #4f46e5;
+            color: white;
+            cursor: pointer;
+        }
+
+        button:hover {
+            opacity: 0.85;
+        }
+
+        .add-button {
+            width: 100%;
+            margin-top: 5px;
+        }
+
+        .total {
+            margin: 25px 0;
+            padding: 20px;
+            background: #eef2ff;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .total h2 {
+            margin: 0 0 10px;
+            color: #4338ca;
+        }
+
+        #total-amount {
+            font-size: 30px;
+            font-weight: bold;
+            color: #059669;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th, td {
+            padding: 12px 8px;
+            border-bottom: 1px solid #e5e7eb;
+            text-align: left;
+        }
+
+        th {
+            background: #f3f4f6;
+        }
+
+        .delete-button {
+            padding: 8px 10px;
+            background: #ef4444;
+        }
+
+        #empty-message {
+            text-align: center;
+            color: #9ca3af;
+            padding: 20px;
+        }
+
+        .clear-button {
+            width: 100%;
+            margin-top: 20px;
+            background: #374151;
+        }
+
+        #status {
+            margin-top: 15px;
+            color: #059669;
+            text-align: center;
+            font-size: 14px;
+        }
+
+        footer {
+            margin-top: 25px;
+            padding-top: 15px;
+            border-top: 1px solid #e5e7eb;
+            text-align: center;
+            color: #9ca3af;
+            font-size: 12px;
+        }
+
+        @media (max-width: 500px) {
+            .container {
+                padding: 18px;
+            }
+
+            th, td {
+                padding: 9px 5px;
+                font-size: 13px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <main class="container">
+        <h1>💰 Учёт расходов</h1>
+
+        <p class="subtitle">
+            Лабораторная работа №8: JSON и LocalStorage
+        </p>
+
+        <form id="expense-form">
+            <div class="form-group">
+                <label for="category">Категория расхода</label>
+                <select id="category" required>
+                    <option value="Продукты">Продукты</option>
+                    <option value="Транспорт">Транспорт</option>
+                    <option value="Развлечения">Развлечения</option>
+                    <option value="Одежда">Одежда</option>
+                    <option value="Учёба">Учёба</option>
+                    <option value="Другое">Другое</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="amount">Сумма (₸)</label>
+                <input
+                    type="number"
+                    id="amount"
+                    placeholder="Например, 2500"
+                    min="0.01"
+                    max="1000000000"
+                    step="0.01"
+                    required
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="date">Дата расхода</label>
+                <input type="date" id="date" required>
+            </div>
+
+            <button type="submit" class="add-button">
+                Добавить расход
+            </button>
+        </form>
+
+        <section class="total">
+            <h2>Общая сумма расходов</h2>
+            <div id="total-amount">0 ₸</div>
+        </section>
+
+        <h2>История расходов</h2>
+
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Категория</th>
+                        <th>Сумма</th>
+                        <th>Дата</th>
+                        <th>Действие</th>
+                    </tr>
+                </thead>
+                <tbody id="expense-list"></tbody>
+            </table>
+        </div>
+
+        <p id="empty-message">Расходов пока нет.</p>
+
+        <button id="clear-button" class="clear-button" type="button">
+            Очистить все расходы
+        </button>
+
+        <p id="status">Готово к работе</p>
+
+        <footer>
+            <p>Дисциплина: Языки и технологии программирования</p>
+            <p>Неделя 8 · HTML, CSS, JavaScript</p>
+        </footer>
+    </main>
+
+    <script>
+        const form = document.getElementById("expense-form");
+        const categoryInput = document.getElementById("category");
+        const amountInput = document.getElementById("amount");
+        const dateInput = document.getElementById("date");
+        const expenseList = document.getElementById("expense-list");
+        const totalAmount = document.getElementById("total-amount");
+        const emptyMessage = document.getElementById("empty-message");
+        const clearButton = document.getElementById("clear-button");
+        const status = document.getElementById("status");
+
+        const STORAGE_KEY = "lab8_expenses";
+
+        let expenses = [];
+
+        // Установка сегодняшней даты
+        const today = new Date();
+        const localToday = new Date(
+            today.getTime() - today.getTimezoneOffset() * 60000
+        ).toISOString().slice(0, 10);
+
+        dateInput.value = localToday;
+        dateInput.max = localToday;
+
+        // Загрузка расходов из LocalStorage
+        function loadExpenses() {
+            try {
+                const saved = localStorage.getItem(STORAGE_KEY);
+
+                if (saved === null) {
+                    expenses = [];
+                } else {
+                    const parsed = JSON.parse(saved);
+
+                    if (
+                        !Array.isArray(parsed) ||
+                        !parsed.every(item =>
+                            item &&
+                            typeof item.id === "string" &&
+                            typeof item.category === "string" &&
+                            typeof item.amount === "number" &&
+                            Number.isFinite(item.amount) &&
+                            item.amount > 0 &&
+                            typeof item.date === "string"
+                        )
+                    ) {
+                        throw new Error("Неверный формат данных");
+                    }
+
+                    expenses = parsed;
+                }
+
+                status.textContent = "Данные загружены";
+            } catch (error) {
+                expenses = [];
+                status.textContent = "Ошибка загрузки данных";
+                console.error("Ошибка чтения:", error);
+            }
+        }
+
+        // Сохранение расходов
+        function saveExpenses() {
+            try {
+                localStorage.setItem(
+                    STORAGE_KEY,
+                    JSON.stringify(expenses)
+                );
+
+                status.textContent = "Данные сохранены";
+                return true;
+            } catch (error) {
+                status.textContent = "Ошибка сохранения";
+                console.error("Ошибка записи:", error);
+                alert("Не удалось сохранить расходы.");
+                return false;
+            }
+        }
+
+        // Форматирование суммы
+        function formatMoney(amount) {
+            return amount.toLocaleString("ru-RU", {
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 2
+            }) + " ₸";
+        }
+
+        // Отображение расходов и подсчёт общей суммы
+        function renderExpenses() {
+            expenseList.replaceChildren();
+
+            expenses.forEach(expense => {
+                const row = document.createElement("tr");
+
+                const categoryCell = document.createElement("td");
+                categoryCell.textContent = expense.category;
+
+                const amountCell = document.createElement("td");
+                amountCell.textContent = formatMoney(expense.amount);
+
+                const dateCell = document.createElement("td");
+                dateCell.textContent = expense.date;
+
+                const actionCell = document.createElement("td");
+                const deleteButton = document.createElement("button");
+
+                deleteButton.textContent = "Удалить";
+                deleteButton.className = "delete-button";
+                deleteButton.type = "button";
+
+                deleteButton.addEventListener("click", () => {
+                    removeExpense(expense.id);
+                });
+
+                actionCell.append(deleteButton);
+                row.append(
+                    categoryCell,
+                    amountCell,
+                    dateCell,
+                    actionCell
+                );
+
+                expenseList.append(row);
+            });
+
+            const total = expenses.reduce(
+                (sum, expense) => sum + expense.amount,
+                0
+            );
+
+            totalAmount.textContent = formatMoney(total);
+            emptyMessage.hidden = expenses.length > 0;
+        }
+
+        // Добавление расхода
+        form.addEventListener("submit", function(event) {
+            event.preventDefault();
+
+            const category = categoryInput.value;
+            const amount = Number(amountInput.value);
+            const date = dateInput.value;
+
+            if (
+                !Number.isFinite(amount) ||
+                amount <= 0 ||
+                amount > 1000000000
+            ) {
+                alert("Введите корректную сумму расхода.");
+                return;
+            }
+
+            if (!date || date > localToday) {
+                alert("Выберите корректную дату, не позднее сегодняшней.");
+                return;
+            }
+
+            const expense = {
+                id: crypto.randomUUID(),
+                category: category,
+                amount: amount,
+                date: date
+            };
+
+            expenses.push(expense);
+
+            if (saveExpenses()) {
+                renderExpenses();
+                amountInput.value = "";
+                dateInput.value = localToday;
+            } else {
+                expenses.pop();
+            }
+        });
+
+        // Удаление одной операции
+        function removeExpense(id) {
+            const previousExpenses = expenses;
+
+            expenses = expenses.filter(
+                expense => expense.id !== id
+            );
+
+            if (saveExpenses()) {
+                renderExpenses();
+            } else {
+                expenses = previousExpenses;
+            }
+        }
+
+        // Очистка всех расходов
+        clearButton.addEventListener("click", function() {
+            if (expenses.length === 0) {
+                alert("Список расходов уже пуст.");
+                return;
+            }
+
+            if (!confirm("Удалить все расходы?")) {
+                return;
+            }
+
+            const previousExpenses = expenses;
+            expenses = [];
+
+            try {
+                localStorage.removeItem(STORAGE_KEY);
+                status.textContent = "Все расходы удалены";
+                renderExpenses();
+            } catch (error) {
+                expenses = previousExpenses;
+                status.textContent = "Ошибка очистки";
+                console.error("Ошибка очистки:", error);
+                alert("Не удалось очистить хранилище.");
+                renderExpenses();
+            }
+        });
+
+        // Запуск приложения
+        loadExpenses();
+        renderExpenses();
+    </script>
+</body>
+</html>
+
