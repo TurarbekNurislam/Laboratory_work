@@ -1,1 +1,349 @@
 
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Лабораторная работа №8 — Список покупок</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 30px 15px;
+            min-height: 100vh;
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #dbeafe, #ede9fe);
+            color: #1f2937;
+        }
+
+        .container {
+            max-width: 650px;
+            margin: 30px auto;
+            padding: 30px;
+            background: white;
+            border-radius: 18px;
+            box-shadow: 0 10px 30px #00000015;
+        }
+
+        h1 {
+            text-align: center;
+            color: #4338ca;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #6b7280;
+            margin-bottom: 25px;
+        }
+
+        form {
+            display: flex;
+            gap: 10px;
+        }
+
+        input {
+            flex: 1;
+            min-width: 0;
+            padding: 13px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+
+        button {
+            padding: 12px 16px;
+            border: none;
+            border-radius: 8px;
+            background: #4f46e5;
+            color: white;
+            cursor: pointer;
+        }
+
+        button:hover {
+            opacity: 0.85;
+        }
+
+        .info {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 22px;
+            font-size: 14px;
+        }
+
+        #status {
+            color: #059669;
+        }
+
+        ul {
+            padding: 0;
+            list-style: none;
+        }
+
+        li {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            margin-top: 12px;
+            padding: 13px;
+            background: #f3f4f6;
+            border-radius: 8px;
+        }
+
+        .product-name {
+            flex: 1;
+            overflow-wrap: anywhere;
+        }
+
+        .delete-button {
+            background: #ef4444;
+        }
+
+        #empty-message {
+            text-align: center;
+            color: #9ca3af;
+            padding: 15px;
+        }
+
+        .clear-button {
+            width: 100%;
+            margin-top: 12px;
+            background: #374151;
+        }
+
+        footer {
+            margin-top: 25px;
+            padding-top: 15px;
+            border-top: 1px solid #e5e7eb;
+            text-align: center;
+            color: #9ca3af;
+            font-size: 12px;
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 20px;
+            }
+
+            form {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <main class="container">
+        <h1>🛒 Список покупок</h1>
+
+        <p class="subtitle">
+            Лабораторная работа №8: JSON и LocalStorage
+        </p>
+
+        <form id="shopping-form">
+            <input
+                type="text"
+                id="product-input"
+                placeholder="Введите название товара"
+                maxlength="100"
+                required
+            >
+            <button type="submit">Добавить</button>
+        </form>
+
+        <div class="info">
+            <span>Всего товаров: <strong id="count">0</strong></span>
+            <span id="status">Загрузка данных...</span>
+        </div>
+
+        <ul id="shopping-list"></ul>
+
+        <p id="empty-message">Список покупок пока пуст.</p>
+
+        <button id="clear-button" class="clear-button" type="button">
+            Очистить список
+        </button>
+
+        <footer>
+            <p>Дисциплина: Языки и технологии программирования</p>
+            <p>Неделя 8 · HTML, CSS, JavaScript</p>
+        </footer>
+    </main>
+
+    <script>
+        const form = document.getElementById("shopping-form");
+        const input = document.getElementById("product-input");
+        const list = document.getElementById("shopping-list");
+        const count = document.getElementById("count");
+        const emptyMessage = document.getElementById("empty-message");
+        const clearButton = document.getElementById("clear-button");
+        const status = document.getElementById("status");
+
+        const STORAGE_KEY = "lab8_shopping_list";
+
+        let products = [];
+
+        // Загрузка данных из LocalStorage
+        function loadProducts() {
+            try {
+                const saved = localStorage.getItem(STORAGE_KEY);
+
+                if (saved === null) {
+                    products = [];
+                } else {
+                    const parsed = JSON.parse(saved);
+
+                    if (
+                        !Array.isArray(parsed) ||
+                        !parsed.every(
+                            item =>
+                                item &&
+                                typeof item.id === "string" &&
+                                typeof item.name === "string"
+                        )
+                    ) {
+                        throw new Error("Некорректный формат данных");
+                    }
+
+                    products = parsed;
+                }
+
+                status.textContent = "Данные загружены";
+            } catch (error) {
+                products = [];
+                status.textContent = "Ошибка загрузки";
+                console.error("Ошибка чтения данных:", error);
+            }
+        }
+
+        // Сохранение данных в LocalStorage
+        function saveProducts() {
+            try {
+                localStorage.setItem(
+                    STORAGE_KEY,
+                    JSON.stringify(products)
+                );
+
+                status.textContent = "Изменения сохранены";
+                return true;
+            } catch (error) {
+                status.textContent = "Ошибка сохранения";
+                console.error("Ошибка сохранения:", error);
+                alert("Не удалось сохранить данные в браузере.");
+                return false;
+            }
+        }
+
+        // Отображение товаров
+        function renderProducts() {
+            list.replaceChildren();
+
+            products.forEach(product => {
+                const li = document.createElement("li");
+
+                const name = document.createElement("span");
+                name.className = "product-name";
+                name.textContent = product.name;
+
+                const deleteButton = document.createElement("button");
+                deleteButton.className = "delete-button";
+                deleteButton.textContent = "Удалить";
+                deleteButton.type = "button";
+
+                deleteButton.addEventListener("click", () => {
+                    removeProduct(product.id);
+                });
+
+                li.append(name, deleteButton);
+                list.append(li);
+            });
+
+            count.textContent = products.length;
+            emptyMessage.hidden = products.length > 0;
+        }
+
+        // Добавление товара
+        function addProduct(name) {
+            const product = {
+                id: crypto.randomUUID(),
+                name: name
+            };
+
+            products.push(product);
+
+            if (saveProducts()) {
+                renderProducts();
+            } else {
+                products.pop();
+            }
+        }
+
+        // Удаление товара
+        function removeProduct(id) {
+            const previousProducts = products;
+
+            products = products.filter(product => product.id !== id);
+
+            if (saveProducts()) {
+                renderProducts();
+            } else {
+                products = previousProducts;
+            }
+        }
+
+        // Обработка формы
+        form.addEventListener("submit", function(event) {
+            event.preventDefault();
+
+            const name = input.value.trim();
+
+            if (!name) {
+                alert("Введите название товара.");
+                return;
+            }
+
+            addProduct(name);
+            input.value = "";
+            input.focus();
+        });
+
+        // Полная очистка списка
+        clearButton.addEventListener("click", function() {
+            if (products.length === 0) {
+                alert("Список уже пуст.");
+                return;
+            }
+
+            if (!confirm("Удалить все товары из списка?")) {
+                return;
+            }
+
+            const previousProducts = products;
+            products = [];
+
+            try {
+                localStorage.removeItem(STORAGE_KEY);
+                status.textContent = "Список очищен";
+                renderProducts();
+            } catch (error) {
+                products = previousProducts;
+                status.textContent = "Ошибка очистки";
+                console.error("Ошибка очистки:", error);
+                alert("Не удалось очистить хранилище.");
+                renderProducts();
+            }
+        });
+
+        // Запуск приложения
+        loadProducts();
+        renderProducts();
+    </script>
+</body>
+</html>
+
