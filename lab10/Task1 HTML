@@ -1,0 +1,134 @@
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Конвертер единиц</title>
+<style>
+body {
+    font-family: Arial;
+    background: #e8efff;
+    padding: 30px;
+}
+.container {
+    max-width: 400px;
+    margin: 60px auto;
+    background: white;
+    padding: 25px;
+    border-radius: 15px;
+    box-shadow: 0 5px 15px #0002;
+}
+h1 { text-align: center; color: #2563eb; }
+input, select, button {
+    width: 100%;
+    padding: 12px;
+    margin: 10px 0;
+    box-sizing: border-box;
+}
+button {
+    background: #2563eb;
+    color: white;
+    border: none;
+    cursor: pointer;
+    border-radius: 6px;
+}
+#result {
+    background: #eff6ff;
+    padding: 15px;
+    text-align: center;
+    border-radius: 6px;
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+<h1>Конвертер единиц</h1>
+
+<select id="operation">
+<option value="km-m">Километры → Метры</option>
+<option value="m-km">Метры → Километры</option>
+<option value="kg-g">Килограммы → Граммы</option>
+<option value="g-kg">Граммы → Килограммы</option>
+<option value="min-sec">Минуты → Секунды</option>
+<option value="sec-min">Секунды → Минуты</option>
+</select>
+
+<input type="number" id="value" placeholder="Введите число" step="any">
+
+<button id="convert">Преобразовать</button>
+<button id="reset">Очистить</button>
+
+<p id="result">Результат появится здесь</p>
+</div>
+
+<script type="module">
+// Модуль вычислений
+const Units = (() => {
+    function convert(value, operation) {
+        const conversions = {
+            "km-m": value => value * 1000,
+            "m-km": value => value / 1000,
+            "kg-g": value => value * 1000,
+            "g-kg": value => value / 1000,
+            "min-sec": value => value * 60,
+            "sec-min": value => value / 60
+        };
+
+        if (!Number.isFinite(value) || value < 0)
+            throw new Error("Введите неотрицательное число!");
+
+        if (!conversions[operation])
+            throw new Error("Неизвестная операция!");
+
+        return conversions[operation](value);
+    }
+
+    return { convert };
+})();
+
+// Модуль форматирования
+const Formatter = (() => {
+    function format(value, operation) {
+        const units = {
+            "km-m": "м", "m-km": "км",
+            "kg-g": "г", "g-kg": "кг",
+            "min-sec": "сек", "sec-min": "мин"
+        };
+
+        return Number(value.toFixed(6)) + " " + units[operation];
+    }
+
+    return { format };
+})();
+
+// Главный модуль
+const input = document.querySelector("#value");
+const operation = document.querySelector("#operation");
+const result = document.querySelector("#result");
+
+document.querySelector("#convert").addEventListener("click", () => {
+    if (input.value.trim() === "") {
+        result.textContent = "Введите значение!";
+        return;
+    }
+
+    try {
+        const value = Units.convert(Number(input.value), operation.value);
+        result.textContent = "Результат: " +
+            Formatter.format(value, operation.value);
+    } catch (error) {
+        result.textContent = error.message;
+    }
+});
+
+document.querySelector("#reset").addEventListener("click", () => {
+    input.value = "";
+    operation.selectedIndex = 0;
+    result.textContent = "Результат появится здесь";
+});
+</script>
+
+</body>
+</html>
