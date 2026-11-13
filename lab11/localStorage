@@ -1,0 +1,201 @@
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Дополнительное задание — LocalStorage</title>
+
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <style>
+        body {
+            font-family: Arial;
+            background: #f1f4f9;
+            padding: 30px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: auto;
+            padding: 25px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 3px 12px #0002;
+        }
+
+        h1 {
+            color: #273c75;
+        }
+
+        input {
+            padding: 12px;
+            width: 65%;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+        }
+
+        button {
+            padding: 10px;
+            margin: 5px;
+            background: #3867d6;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .task {
+            padding: 12px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .done {
+            text-decoration: line-through;
+            color: gray;
+        }
+    </style>
+</head>
+
+<body>
+
+<div id="root"></div>
+
+<script type="text/babel">
+
+const { useState, useEffect } = React;
+
+function App() {
+
+    // Загрузка сохранённых задач
+    const [tasks, setTasks] = useState(() => {
+        try {
+            const saved = localStorage.getItem("myTasks");
+            return saved ? JSON.parse(saved) : [];
+        } catch {
+            return [];
+        }
+    });
+
+    const [text, setText] = useState("");
+
+    // Автоматическое сохранение
+    useEffect(() => {
+        localStorage.setItem(
+            "myTasks",
+            JSON.stringify(tasks)
+        );
+    }, [tasks]);
+
+    // Добавление задачи
+    function addTask() {
+
+        if (!text.trim()) {
+            alert("Введите задачу!");
+            return;
+        }
+
+        setTasks(prev => [
+            ...prev,
+            {
+                id: Date.now(),
+                text: text,
+                completed: false
+            }
+        ]);
+
+        setText("");
+    }
+
+    // Выполнение задачи
+    function toggleTask(id) {
+
+        setTasks(prev =>
+            prev.map(task =>
+                task.id === id
+                    ? {
+                        ...task,
+                        completed: !task.completed
+                    }
+                    : task
+            )
+        );
+    }
+
+    // Удаление задачи
+    function deleteTask(id) {
+
+        setTasks(prev =>
+            prev.filter(task => task.id !== id)
+        );
+    }
+
+    return (
+        <div className="container">
+
+            <h1>💾 Сохранение задач</h1>
+
+            <p>
+                Задачи автоматически сохраняются
+                в localStorage.
+            </p>
+
+            <input
+                value={text}
+                onChange={e => setText(e.target.value)}
+                placeholder="Введите задачу"
+            />
+
+            <button onClick={addTask}>
+                Добавить
+            </button>
+
+            {tasks.map(task => (
+
+                <div className="task" key={task.id}>
+
+                    <span className={
+                        task.completed ? "done" : ""
+                    }>
+                        {task.text}
+                    </span>
+
+                    <button onClick={() =>
+                        toggleTask(task.id)
+                    }>
+                        Выполнено
+                    </button>
+
+                    <button onClick={() =>
+                        deleteTask(task.id)
+                    }>
+                        Удалить
+                    </button>
+
+                </div>
+            ))}
+
+            <h3>Всего задач: {tasks.length}</h3>
+
+            <button onClick={() => {
+                if (confirm("Удалить все задачи?")) {
+                    setTasks([]);
+                }
+            }}>
+                Очистить список
+            </button>
+
+        </div>
+    );
+}
+
+ReactDOM.createRoot(
+    document.getElementById("root")
+).render(<App />);
+
+</script>
+
+</body>
+</html>
