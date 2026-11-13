@@ -1,0 +1,207 @@
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Задание 2 — Список задач</title>
+
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <style>
+        body {
+            font-family: Arial;
+            background: #f1f4f9;
+            padding: 30px;
+        }
+
+        .container {
+            background: white;
+            max-width: 650px;
+            margin: auto;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 3px 12px #0002;
+        }
+
+        h1 {
+            text-align: center;
+            color: #273c75;
+        }
+
+        input {
+            padding: 12px;
+            width: 65%;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+        }
+
+        button {
+            padding: 10px 14px;
+            margin: 5px;
+            border: none;
+            border-radius: 6px;
+            color: white;
+            background: #3867d6;
+            cursor: pointer;
+        }
+
+        .delete {
+            background: #e74c3c;
+        }
+
+        .task {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            border-bottom: 1px solid #ddd;
+            padding: 12px 0;
+        }
+
+        .completed {
+            text-decoration: line-through;
+            color: gray;
+        }
+    </style>
+</head>
+
+<body>
+
+<div id="root"></div>
+
+<script type="text/babel">
+
+const { useState } = React;
+
+// Компонент одной задачи
+function TodoItem({ task, onToggle, onDelete }) {
+
+    return (
+        <div className="task">
+
+            <span className={
+                task.completed ? "completed" : ""
+            }>
+                {task.text}
+            </span>
+
+            <div>
+                <button onClick={onToggle}>
+                    {task.completed
+                        ? "Вернуть"
+                        : "Выполнено"}
+                </button>
+
+                <button className="delete"
+                    onClick={onDelete}>
+                    Удалить
+                </button>
+            </div>
+
+        </div>
+    );
+}
+
+// Родительский компонент списка задач
+function TodoList() {
+
+    const [tasks, setTasks] = useState([]);
+    const [newTask, setNewTask] = useState("");
+
+    // Добавление задачи
+    function addTask() {
+
+        if (newTask.trim() === "") {
+            alert("Введите задачу!");
+            return;
+        }
+
+        const task = {
+            id: Date.now(),
+            text: newTask,
+            completed: false
+        };
+
+        setTasks(prev => [...prev, task]);
+        setNewTask("");
+    }
+
+    // Изменение статуса задачи
+    function toggleTask(id) {
+
+        setTasks(prev =>
+            prev.map(task =>
+                task.id === id
+                    ? {
+                        ...task,
+                        completed: !task.completed
+                    }
+                    : task
+            )
+        );
+    }
+
+    // Удаление задачи
+    function deleteTask(id) {
+
+        setTasks(prev =>
+            prev.filter(task => task.id !== id)
+        );
+    }
+
+    const completed = tasks.filter(
+        task => task.completed
+    ).length;
+
+    return (
+        <div className="container">
+
+            <h1>Мой список задач</h1>
+
+            <input
+                value={newTask}
+                onChange={e =>
+                    setNewTask(e.target.value)
+                }
+                placeholder="Введите задачу..."
+            />
+
+            <button onClick={addTask}>
+                Добавить
+            </button>
+
+            {tasks.length === 0
+                ? <p>Задач пока нет.</p>
+                : tasks.map(task => (
+                    <TodoItem
+                        key={task.id}
+                        task={task}
+                        onToggle={() =>
+                            toggleTask(task.id)
+                        }
+                        onDelete={() =>
+                            deleteTask(task.id)
+                        }
+                    />
+                ))
+            }
+
+            <h3>
+                Выполнено: {completed} / {tasks.length}
+            </h3>
+
+        </div>
+    );
+}
+
+ReactDOM.createRoot(
+    document.getElementById("root")
+).render(<TodoList />);
+
+</script>
+
+</body>
+</html>
