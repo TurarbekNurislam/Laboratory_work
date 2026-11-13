@@ -1,0 +1,104 @@
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Задание 1 — Счётчик лайков</title>
+
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <style>
+        body {
+            font-family: Arial;
+            background: #f1f4f9;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .card {
+            background: white;
+            padding: 30px;
+            margin: 20px auto;
+            max-width: 400px;
+            border-radius: 12px;
+            box-shadow: 0 3px 12px #0002;
+        }
+
+        button {
+            padding: 12px 20px;
+            margin: 8px;
+            border: none;
+            border-radius: 7px;
+            background: #e84393;
+            color: white;
+            cursor: pointer;
+        }
+
+        .reset {
+            background: #3867d6;
+        }
+
+        h1 {
+            color: #273c75;
+        }
+    </style>
+</head>
+
+<body>
+
+<div id="root"></div>
+
+<script type="text/babel">
+
+const { useState } = React;
+
+// Дочерний компонент
+function LikeButton({ title }) {
+
+    const [likes, setLikes] = useState(0);
+
+    return (
+        <div className="card">
+            <h2>{title}</h2>
+
+            <h1>❤️ {likes}</h1>
+
+            <button onClick={() =>
+                setLikes(prev => prev + 1)
+            }>
+                Нравится ❤️
+            </button>
+
+            <button className="reset"
+                onClick={() => setLikes(0)}>
+                Сбросить
+            </button>
+        </div>
+    );
+}
+
+// Родительский компонент
+function App() {
+    return (
+        <div>
+            <h1>Счётчик лайков</h1>
+
+            <LikeButton title="Моя публикация" />
+
+            <LikeButton title="Вторая публикация" />
+        </div>
+    );
+}
+
+ReactDOM.createRoot(
+    document.getElementById("root")
+).render(<App />);
+
+</script>
+
+</body>
+</html>
+
