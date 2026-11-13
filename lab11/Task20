@@ -1,0 +1,241 @@
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Задание 3 — Конструктор заказа</title>
+
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <style>
+        body {
+            font-family: Arial;
+            background: #f1f4f9;
+            padding: 30px;
+        }
+
+        .container {
+            max-width: 750px;
+            margin: auto;
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 3px 12px #0002;
+        }
+
+        h1, h2 {
+            color: #273c75;
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+        .item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            flex-wrap: wrap;
+            padding: 12px 0;
+            border-bottom: 1px solid #ddd;
+        }
+
+        button {
+            padding: 10px 14px;
+            border: none;
+            border-radius: 6px;
+            background: #3867d6;
+            color: white;
+            cursor: pointer;
+        }
+
+        .delete {
+            background: #e74c3c;
+        }
+
+        .total {
+            font-size: 23px;
+            color: #20a45b;
+            font-weight: bold;
+            margin-top: 25px;
+        }
+    </style>
+</head>
+
+<body>
+
+<div id="root"></div>
+
+<script type="text/babel">
+
+const { useState } = React;
+
+// Список блюд
+const menu = [
+    { id: 1, name: "🍕 Пицца", price: 2500 },
+    { id: 2, name: "🍔 Бургер", price: 1800 },
+    { id: 3, name: "🥗 Салат", price: 1500 },
+    { id: 4, name: "🥤 Сок", price: 700 },
+    { id: 5, name: "🍟 Картофель фри", price: 900 }
+];
+
+// Дочерний компонент блюда
+function MenuItem({ item, onAdd }) {
+
+    return (
+        <div className="item">
+
+            <strong>{item.name}</strong>
+
+            <span>{item.price} ₸</span>
+
+            <button onClick={() => onAdd(item)}>
+                Добавить
+            </button>
+
+        </div>
+    );
+}
+
+// Родительский компонент заказа
+function Order() {
+
+    const [order, setOrder] = useState([]);
+
+    // Добавление блюда
+    function addItem(item) {
+
+        setOrder(prev => {
+
+            const existing = prev.find(
+                i => i.id === item.id
+            );
+
+            if (existing) {
+
+                return prev.map(i =>
+                    i.id === item.id
+                        ? {
+                            ...i,
+                            quantity: i.quantity + 1
+                        }
+                        : i
+                );
+
+            }
+
+            return [
+                ...prev,
+                { ...item, quantity: 1 }
+            ];
+        });
+    }
+
+    // Изменение количества
+    function changeQuantity(id, amount) {
+
+        setOrder(prev =>
+            prev
+                .map(item =>
+                    item.id === id
+                        ? {
+                            ...item,
+                            quantity: item.quantity + amount
+                        }
+                        : item
+                )
+                .filter(item => item.quantity > 0)
+        );
+    }
+
+    // Удаление блюда
+    function removeItem(id) {
+
+        setOrder(prev =>
+            prev.filter(item => item.id !== id)
+        );
+    }
+
+    // Расчёт стоимости
+    const total = order.reduce(
+        (sum, item) =>
+            sum + item.price * item.quantity,
+        0
+    );
+
+    return (
+        <div className="container">
+
+            <h1>🍽 Конструктор заказа</h1>
+
+            <h2>Меню ресторана</h2>
+
+            {menu.map(item => (
+                <MenuItem
+                    key={item.id}
+                    item={item}
+                    onAdd={addItem}
+                />
+            ))}
+
+            <h2>🛒 Ваш заказ</h2>
+
+            {order.length === 0
+                ? <p>Вы ещё не выбрали блюда.</p>
+                : order.map(item => (
+
+                    <div className="item" key={item.id}>
+
+                        <strong>{item.name}</strong>
+
+                        <button onClick={() =>
+                            changeQuantity(item.id, -1)
+                        }>
+                            -
+                        </button>
+
+                        <span>{item.quantity}</span>
+
+                        <button onClick={() =>
+                            changeQuantity(item.id, 1)
+                        }>
+                            +
+                        </button>
+
+                        <span>
+                            {item.price * item.quantity} ₸
+                        </span>
+
+                        <button
+                            className="delete"
+                            onClick={() =>
+                                removeItem(item.id)
+                            }
+                        >
+                            Удалить
+                        </button>
+
+                    </div>
+                ))
+            }
+
+            <div className="total">
+                Итого: {total.toLocaleString("ru-RU")} ₸
+            </div>
+
+        </div>
+    );
+}
+
+ReactDOM.createRoot(
+    document.getElementById("root")
+).render(<Order />);
+
+</script>
+
+</body>
+</html>
