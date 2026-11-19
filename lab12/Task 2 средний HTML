@@ -1,0 +1,272 @@
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Лабораторная работа №12 — Администратор</title>
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #eef2f7;
+}
+
+header {
+    background: #172b46;
+    color: white;
+    padding: 20px;
+    text-align: center;
+}
+
+.container {
+    max-width: 850px;
+    margin: 40px auto;
+    padding: 20px;
+}
+
+.card {
+    background: white;
+    padding: 25px;
+    border-radius: 14px;
+    box-shadow: 0 5px 20px #0001;
+    margin-bottom: 20px;
+}
+
+input {
+    width: 100%;
+    padding: 13px;
+    margin: 10px 0;
+    border: 1px solid #ccc;
+    border-radius: 7px;
+}
+
+button {
+    padding: 12px 20px;
+    border: none;
+    background: #24558a;
+    color: white;
+    border-radius: 7px;
+    cursor: pointer;
+    margin: 5px;
+}
+
+button:hover {
+    background: #163c68;
+}
+
+.logout {
+    background: #d93636;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+}
+
+th, td {
+    padding: 12px;
+    border-bottom: 1px solid #ddd;
+    text-align: left;
+}
+
+th {
+    background: #edf2f8;
+}
+
+#message {
+    margin-top: 15px;
+    font-weight: bold;
+}
+
+[hidden] {
+    display: none !important;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+    <h1>Панель администратора</h1>
+    <p>Лабораторная работа №12</p>
+</header>
+
+<div class="container">
+
+    <div class="card" id="loginPanel">
+        <h2>Вход в систему</h2>
+
+        <input id="login" placeholder="Логин">
+        <input id="password" type="password"
+               placeholder="Пароль">
+
+        <button onclick="login()">Войти</button>
+
+        <p>Тестовый аккаунт: admin / admin123</p>
+    </div>
+
+    <div id="adminPanel" hidden>
+
+        <div class="card">
+            <h2>Добро пожаловать, администратор!</h2>
+            <p>Ваши права: полный доступ к учебной панели.</p>
+
+            <button onclick="showUsers()">Пользователи</button>
+            <button onclick="showStatistics()">Статистика</button>
+            <button class="logout" onclick="logout()">Выйти</button>
+        </div>
+
+        <div class="card" id="content">
+            <h2>Главная панель</h2>
+            <p>Вы успешно авторизовались как администратор.</p>
+        </div>
+
+    </div>
+
+    <div id="message"></div>
+
+</div>
+
+<script>
+
+// Учебная база пользователей
+const users = [
+    {
+        login: "student",
+        password: "student123",
+        role: "Студент"
+    },
+    {
+        login: "admin",
+        password: "admin123",
+        role: "Администратор"
+    },
+    {
+        login: "moderator",
+        password: "moderator123",
+        role: "Модератор"
+    }
+];
+
+let currentUser = null;
+
+// Авторизация
+function login() {
+
+    const loginValue =
+        document.getElementById("login").value;
+
+    const passwordValue =
+        document.getElementById("password").value;
+
+    const user = users.find(u =>
+        u.login === loginValue &&
+        u.password === passwordValue
+    );
+
+    if (!user) {
+        message("Неверный логин или пароль!");
+        return;
+    }
+
+    currentUser = user;
+
+    // Проверка роли
+    if (user.role !== "Администратор") {
+        currentUser = null;
+        message("Доступ запрещен! Вы не администратор.");
+        return;
+    }
+
+    document.getElementById("loginPanel").hidden = true;
+    document.getElementById("adminPanel").hidden = false;
+
+    message("Авторизация успешна!");
+}
+
+// Повторная проверка прав
+function checkAdmin() {
+
+    if (!currentUser ||
+        currentUser.role !== "Администратор") {
+
+        message("Ошибка доступа!");
+        return false;
+    }
+
+    return true;
+}
+
+// Список пользователей
+function showUsers() {
+
+    if (!checkAdmin()) return;
+
+    let html = `
+        <h2>Список пользователей</h2>
+
+        <table>
+            <tr>
+                <th>Логин</th>
+                <th>Роль</th>
+            </tr>
+    `;
+
+    users.forEach(user => {
+        html += `
+            <tr>
+                <td>${user.login}</td>
+                <td>${user.role}</td>
+            </tr>
+        `;
+    });
+
+    html += "</table>";
+
+    document.getElementById("content").innerHTML = html;
+}
+
+// Статистика
+function showStatistics() {
+
+    if (!checkAdmin()) return;
+
+    document.getElementById("content").innerHTML = `
+        <h2>Статистика системы</h2>
+        <p>Всего пользователей: ${users.length}</p>
+        <p>Студентов: 1</p>
+        <p>Администраторов: 1</p>
+        <p>Модераторов: 1</p>
+    `;
+}
+
+// Выход
+function logout() {
+
+    currentUser = null;
+
+    document.getElementById("loginPanel").hidden = false;
+    document.getElementById("adminPanel").hidden = true;
+
+    document.getElementById("login").value = "";
+    document.getElementById("password").value = "";
+
+    message("Вы вышли из системы.");
+}
+
+// Сообщения
+function message(text) {
+    document.getElementById("message").textContent = text;
+}
+
+</script>
+
+</body>
+</html>
