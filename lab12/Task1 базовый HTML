@@ -1,0 +1,238 @@
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Лабораторная работа №12</title>
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: linear-gradient(135deg, #141e30, #243b55);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.container {
+    width: 90%;
+    max-width: 450px;
+    background: white;
+    padding: 35px;
+    border-radius: 18px;
+    box-shadow: 0 10px 40px #0005;
+    text-align: center;
+}
+
+h1 {
+    color: #243b55;
+}
+
+input {
+    width: 100%;
+    padding: 14px;
+    margin: 10px 0;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 16px;
+}
+
+button {
+    width: 100%;
+    padding: 13px;
+    margin: 8px 0;
+    border: none;
+    border-radius: 8px;
+    background: #243b55;
+    color: white;
+    font-size: 15px;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #37628d;
+}
+
+.logout {
+    background: #d93636;
+}
+
+.accounts {
+    background: #f1f4f8;
+    padding: 12px;
+    border-radius: 10px;
+    margin-top: 20px;
+    font-size: 13px;
+}
+
+#result {
+    margin-top: 15px;
+    overflow-wrap: anywhere;
+    color: #243b55;
+}
+
+[hidden] {
+    display: none !important;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1> Авторизация</h1>
+    <p>Лабораторная работа №12</p>
+
+    <div id="loginBlock">
+        <input id="login" placeholder="Введите логин">
+        <input id="password" type="password"
+               placeholder="Введите пароль">
+
+        <button onclick="login()">Войти</button>
+    </div>
+
+    <div id="dashboard" hidden>
+        <h2 id="welcome"></h2>
+        <p id="role"></p>
+
+        <button onclick="getProfile()">Мой профиль</button>
+        <button onclick="openAdmin()">Панель администратора</button>
+        <button onclick="openModerator()">Панель модератора</button>
+        <button class="logout" onclick="logout()">Выйти</button>
+    </div>
+
+    <div id="result"></div>
+
+    <div class="accounts">
+        <h3>Тестовые аккаунты</h3>
+        <p>Студент: student / student123</p>
+        <p>Администратор: admin / admin123</p>
+        <p>Модератор: moderator / moderator123</p>
+    </div>
+
+</div>
+
+<script>
+// Учебные пользователи
+const users = [
+    {
+        login: "student",
+        password: "student123",
+        role: "Студент",
+        name: "Иван Иванов"
+    },
+    {
+        login: "admin",
+        password: "admin123",
+        role: "Администратор",
+        name: "Администратор"
+    },
+    {
+        login: "moderator",
+        password: "moderator123",
+        role: "Модератор",
+        name: "Модератор"
+    }
+];
+
+let currentUser = null;
+
+// Вход
+function login() {
+    const loginValue =
+        document.getElementById("login").value;
+
+    const passwordValue =
+        document.getElementById("password").value;
+
+    const user = users.find(u =>
+        u.login === loginValue &&
+        u.password === passwordValue
+    );
+
+    if (!user) {
+        show(" Неверный логин или пароль!");
+        return;
+    }
+
+    currentUser = user;
+
+    document.getElementById("loginBlock").hidden = true;
+    document.getElementById("dashboard").hidden = false;
+
+    document.getElementById("welcome").textContent =
+        "Добро пожаловать, " + user.name;
+
+    document.getElementById("role").textContent =
+        "Ваша роль: " + user.role;
+
+    show("✅ Вы успешно вошли в систему!");
+}
+
+// Профиль
+function getProfile() {
+    if (!currentUser) return;
+
+    show(
+        "Имя: " + currentUser.name +
+        " | Роль: " + currentUser.role +
+        " | Логин: " + currentUser.login
+    );
+}
+
+// Панель администратора
+function openAdmin() {
+    if (!currentUser) return;
+
+    if (currentUser.role !== "Администратор") {
+        show(" Доступ запрещен! Только для администратора.");
+        return;
+    }
+
+    show(" Добро пожаловать в панель администратора!");
+}
+
+// Панель модератора
+function openModerator() {
+    if (!currentUser) return;
+
+    if (
+        currentUser.role !== "Модератор" &&
+        currentUser.role !== "Администратор"
+    ) {
+        show(" Доступ запрещен!");
+        return;
+    }
+
+    show(" Добро пожаловать в панель модератора!");
+}
+
+// Выход
+function logout() {
+    currentUser = null;
+
+    document.getElementById("loginBlock").hidden = false;
+    document.getElementById("dashboard").hidden = true;
+
+    document.getElementById("login").value = "";
+    document.getElementById("password").value = "";
+
+    show("Вы вышли из системы!");
+}
+
+// Сообщения
+function show(message) {
+    document.getElementById("result").textContent = message;
+}
+</script>
+
+</body>
+</html>
