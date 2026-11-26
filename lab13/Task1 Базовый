@@ -1,0 +1,41 @@
+
+from collections import deque
+
+# Создание очереди посетителей
+queue = deque()
+
+while True:
+    print("\n=== ОЧЕРЕДЬ ПОСЕТИТЕЛЕЙ ===")
+    print("1. Зарегистрировать посетителя")
+    print("2. Обслужить первого посетителя")
+    print("3. Просмотреть очередь")
+    print("4. Выход")
+
+    choice = input("Выберите действие: ")
+
+    if choice == "1":
+        name = input("Введите имя посетителя: ")
+        queue.append(name)
+        print(f"{name} добавлен(а) в очередь.")
+
+    elif choice == "2":
+        if queue:
+            visitor = queue.popleft()
+            print(f"Обслуживается посетитель: {visitor}")
+        else:
+            print("Очередь пуста!")
+
+    elif choice == "3":
+        if queue:
+            print("Текущая очередь:")
+            for i, visitor in enumerate(queue, start=1):
+                print(f"{i}. {visitor}")
+        else:
+            print("Очередь пуста!")
+
+    elif choice == "4":
+        print("Программа завершена.")
+        break
+
+    else:
+        print("Неверный выбор!")
