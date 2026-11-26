@@ -1,0 +1,89 @@
+
+# Два стека истории браузера
+back = []
+forward = []
+
+# Начальная страница
+current_page = "google.com"
+
+
+def show_page():
+    print(f"\nТекущая страница: {current_page}")
+
+
+def visit(url):
+    global current_page
+
+    # Сохраняем текущую страницу
+    back.append(current_page)
+
+    # Переходим на новую страницу
+    current_page = url
+
+    # Очищаем историю вперед
+    forward.clear()
+
+    print(f"Переход на страницу: {current_page}")
+
+
+def go_back():
+    global current_page
+
+    if back:
+        forward.append(current_page)
+        current_page = back.pop()
+        print(f"Переход назад: {current_page}")
+    else:
+        print("Нет предыдущих страниц!")
+
+
+def go_forward():
+    global current_page
+
+    if forward:
+        back.append(current_page)
+        current_page = forward.pop()
+        print(f"Переход вперед: {current_page}")
+    else:
+        print("Нет страниц для перехода вперед!")
+
+
+while True:
+    print("\n=== ИСТОРИЯ БРАУЗЕРА ===")
+    print("1. Перейти на новый URL")
+    print("2. Назад")
+    print("3. Вперед")
+    print("4. Показать текущую страницу")
+    print("5. Показать историю")
+    print("6. Выход")
+
+    choice = input("Выберите действие: ")
+
+    if choice == "1":
+        url = input("Введите URL: ")
+
+        if url.strip():
+            visit(url.strip())
+        else:
+            print("URL не может быть пустым!")
+
+    elif choice == "2":
+        go_back()
+
+    elif choice == "3":
+        go_forward()
+
+    elif choice == "4":
+        show_page()
+
+    elif choice == "5":
+        print("\nИстория назад:", back)
+        print("Текущая страница:", current_page)
+        print("История вперед:", forward)
+
+    elif choice == "6":
+        print("Браузер закрыт.")
+        break
+
+    else:
+        print("Неверный выбор!")
