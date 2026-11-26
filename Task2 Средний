@@ -1,0 +1,76 @@
+
+# Словарь посещаемости студентов
+students = {
+    "Алия": "Присутствует",
+    "Дамир": "Отсутствует",
+    "Асан": "Присутствует",
+    "Мадина": "Отсутствует"
+}
+
+while True:
+    print("\n=== УЧЕТ ПОСЕЩАЕМОСТИ ===")
+    print("1. Показать список студентов")
+    print("2. Изменить статус студента")
+    print("3. Подсчитать присутствующих")
+    print("4. Добавить студента")
+    print("5. Удалить студента")
+    print("6. Выход")
+
+    choice = input("Выберите действие: ")
+
+    if choice == "1":
+        for name, status in students.items():
+            print(f"{name}: {status}")
+
+    elif choice == "2":
+        name = input("Введите имя студента: ")
+
+        if name in students:
+            print("1. Присутствует")
+            print("2. Отсутствует")
+
+            status = input("Выберите статус: ")
+
+            if status == "1":
+                students[name] = "Присутствует"
+                print("Статус изменен.")
+            elif status == "2":
+                students[name] = "Отсутствует"
+                print("Статус изменен.")
+            else:
+                print("Неверный статус!")
+        else:
+            print("Студент не найден!")
+
+    elif choice == "3":
+        count = sum(
+            1 for status in students.values()
+            if status == "Присутствует"
+        )
+        print(f"Количество присутствующих: {count}")
+        print(f"Всего студентов: {len(students)}")
+
+    elif choice == "4":
+        name = input("Введите имя нового студента: ")
+
+        if name not in students:
+            students[name] = "Отсутствует"
+            print("Студент добавлен.")
+        else:
+            print("Такой студент уже существует!")
+
+    elif choice == "5":
+        name = input("Введите имя студента для удаления: ")
+
+        if name in students:
+            del students[name]
+            print("Студент удален.")
+        else:
+            print("Студент не найден!")
+
+    elif choice == "6":
+        print("Программа завершена.")
+        break
+
+    else:
+        print("Неверный выбор!")
